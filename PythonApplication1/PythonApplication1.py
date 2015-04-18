@@ -7,7 +7,7 @@ class Name (Grammar):
     grammar = (WORD('A-Za-z', 'A-Za-z0-9_'))
 
 class Number (Grammar):
-    grammar = (WORD('0-9'), OPTIONAL('.', WORD('0-9')))
+    grammar = (WORD('0-9'))
 
 class ParenExpr (Grammar):
     grammar = (L('('), REF('Expr'), L(')'))
@@ -19,7 +19,7 @@ class ValueExpr (Grammar):
     grammar = (OPTIONAL('-'), ParenExpr | FuncExpr | Name | Number)
 
 class P0Term (Grammar):
-    grammar = (ValueExpr)
+    grammar = (ValueExpr,)
 
 class P0Expr (Grammar):
     grammar = (P0Term, ONE_OR_MORE(L('^'), P0Term))
@@ -46,9 +46,6 @@ class Expr (Grammar):
     grammar = (P3Expr | P2Expr | P1Expr | P0Expr | ValueExpr)
 
 if __name__ == '__main__':
-    Expr.grammar_resolve_refs()
-    parser = Expr.parser()
-    result = parser.parse_text(open('TextFile1.txt', 'r').read(), eof=True)
-    remainder = parser.remainder()
-    print("Parsed Text: {}".format(result))
-    print("Unparsed Text: {}".format(remainder))
+    parser = Expr.parser(debug = True)
+    result = parser.parse_file('TextFile1.txt')
+    list(result)
