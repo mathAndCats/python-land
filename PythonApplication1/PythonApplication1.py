@@ -7,19 +7,19 @@ class Name (Grammar):
     grammar = (WORD('A-Za-z', 'A-Za-z0-9_'))
 
     def print(self):
-        return self[0];
+        return self[0].string;
 
 class Number (Grammar):
     grammar = (WORD('0-9'))
 
     def print(self):
-        return self[0];
+        return self[0].string;
 
 class ParenExpr (Grammar):
     grammar = (L('('), REF('Expr'), L(')'))
 
     def print(self):
-        return '(' + self[1] + ')'
+        return '(' + self[1].print() + ')'
 
 class FuncExpr (Grammar):
     grammar = (Name, L('['), REF('Expr'), L(']'))
@@ -39,10 +39,10 @@ class ValueExpr (Grammar):
         if (negative):
             return '-' + self[1].print();
         else:
-            return self[0].print()
+            return self[1].print()
 
 class P0Term (Grammar):
-    grammar = (ValueExpr)
+    grammar = (ValueExpr,)
 
     def print(self):
         return self[0].print()
@@ -51,7 +51,11 @@ class P0Expr (Grammar):
     grammar = (P0Term, ONE_OR_MORE(L('^'), P0Term))
 
     def print(self):
-        return self[0].print() + '^' + self[2].print()
+        value = self[0].print()
+        for e in self[1]:
+            value += '^'
+            value += e[1].print()
+        return value;
 
 
 class P1Term (Grammar):
@@ -66,7 +70,7 @@ class P1Expr (Grammar):
     def print(self):
         value = self[0].print()
         for e in self[1]:
-            value += e[0].string
+            value += '/'
             value += e[1].print()
         return value;
 
@@ -79,10 +83,10 @@ class P2Term (Grammar):
 class P2Expr (Grammar):
     grammar = (P2Term, ONE_OR_MORE(L('*'), P2Term))
 
-    def string(self):
+    def print(self):
         value = self[0].print()
         for e in self[1]:
-            value += e[0].string
+            value += '*'
             value += e[1].print()
         return value;
 
@@ -98,7 +102,10 @@ class P3Expr (Grammar):
     def print(self):
         value = self[0].print()
         for e in self[1]:
-            value += e[0].string
+            if e[0].string == '+':
+                value += '+'
+            if e[0].string == '-':
+                value += '-'
             value += e[1].print()
         return value;
 
