@@ -122,10 +122,10 @@ class Function(Expression):
         return Function(grammar.name, Expression.from_grammar(grammar.body), grammar = grammar)
     
     def __eq__(self, other):
-        return type(self) == type(other) and self.name == other.name and self.operand == other.body
+        return type(self) == type(other) and self.name == other.name and self.body == other.body
 
     def __str__(self):
-        return self.name + '[' + str(self.operand) + ']'
+        return self.name + '[' + str(self.body) + ']'
 
 class Unary(Expression):
     def __init__(self, grammar = None):
@@ -146,7 +146,10 @@ class Negation(Unary):
         self.body.parent = self
 
     def __str__(self):
-        return '-' + str(self.operand)
+        if isinstance(self.body, Negation):
+            return '-' + '(' + str(self.body) + ')'
+        else:
+            return '-' + str(self.body)
     
     def __eq__(self, other):
         return type(self) == type(other) and self.body == other.body
@@ -201,12 +204,12 @@ class Operation(Expression):
 
     def __str__(self):
         if self.method != None:
-            if isinstance(self.operand, Sequence):
+            if isinstance(self.operand, Sequence) and len(self.operand.operations) > 1:
                 return ' ' + str(self.method) + ' ' + '(' + str(self.operand) + ')'
             else:
                 return ' ' + str(self.method) + ' ' + str(self.operand)
         else:
-            if isinstance(self.operand, Sequence):
+            if isinstance(self.operand, Sequence) and len(self.operand.operations) > 1:
                 return '(' + str(self.operand) + ')'
             else:
                 return str(self.operand)
@@ -261,14 +264,7 @@ class Sequence(Expression):
         return True
 
     def __str__(self):
-        values = []
-        for e in self.operations:
-            if isinstance(e, Sequence) and self.method.priority() > e.method.priority():
-                values.append('(' + str(e) + ')')
-            else:
-                values.append(str(e))
-
-        return ''.join(values)
+        return ''.join(map(lambda x : str(x), self.operations))
 
 class Visitor:
 
@@ -306,14 +302,14 @@ class Visitor:
         pass
 
     def VisitFunction(self, expression):
-        self.Visit(expression.operand)
+        self.Visit(expression.body)
 
     def VisitUnary(self, expression):
         if isinstance(expression, Negation):
             self.VisitNegation(expression)
 
     def VisitNegation(self, expression):
-        self.Visit(expression.operand)
+        self.Visit(expression.body)
 
     def VisitSequence(self, expresion):
         self.VisitMany(expresion.operations)
@@ -357,14 +353,14 @@ class Transformer:
         return Variable(expression.name)
 
     def TransformFunction(self, expression):
-        return Function(expression.name, self.Transform(expression.operand))
+        return Function(expression.name, self.Transform(expression.body))
 
     def TransformUnary(self, expression):
         if isinstance(expression, Negation):
             return self.TransformNegation(expression)
 
     def TransformNegation(self, expression):
-        return Negation(self.Transform(expression.operand))
+        return Negation(self.Transform(expression.body))
 
     def TransformSequence(self, expression):
         return Sequence(self.TransformMany(expression.operations))

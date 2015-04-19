@@ -1,5 +1,6 @@
 import sys
 import MathExpressions
+import MathParser
 
 class ReplaceMutiplicationWithDivide(MathExpressions.Transformer):
     def TransformSequence(self, expression):
@@ -9,14 +10,5 @@ class ReplaceMutiplicationWithDivide(MathExpressions.Transformer):
             return super().TransformOperation(expression)
 
 if __name__ == '__main__':
-    e = MathExpressions.parse_file('TextFile1.txt')
+    e = MathExpressions.parse_text('-(-a)')
     print(e)
-    
-    #e2 = ReplaceMutiplicationWithDivide().Transform(e)
-    #print(e2)
-
-    find = MathExpressions.parse_text('DiracDelta[w + omega_p + omega_r + 2 * omega_y]')
-
-    for f in e.find_all(MathExpressions.Function):
-        if f == find:
-            print(f)

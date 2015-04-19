@@ -69,25 +69,9 @@ class Func (BaseGrammar):
 class SingleExpression (BaseGrammar):
     grammar = (OPTIONAL('-'), Paren | Func | Variable | NumberParser)
 
-    def get_body(self):
-        body = self[1]
-
-        if isinstance(body, Paren):
-            if isinstance(body.body, SingleExpression):
-                if isinstance(body.body.body, Number):
-                    return body.body.body
-                if isinstance(body.body.body, Variable):
-                    return body.body.body
-                if isinstance(body.body.body, Paren):
-                    return body.body.body
-                if isinstance(body.body.body, Func):
-                    return body.body.body
-
-        return body
-
     def grammar_elem_init(self, sessiondata):
         self.negative = self[0] and self[0].string == '-'
-        self.body = self.get_body()
+        self.body = self[1]
 
     def print(self):
         if self.negative:
