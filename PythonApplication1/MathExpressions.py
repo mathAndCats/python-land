@@ -1,6 +1,9 @@
 from enum import Enum
 import MathParser
 
+class GrammarParseException(Exception):
+    pass
+
 class Expression():
     def __init__(self, grammar = None):
         self.grammar = grammar
@@ -21,7 +24,7 @@ class Expression():
         if isinstance(grammar, MathParser.Paren):
             return Expression.from_grammar_paren(grammar)
 
-        print(type(grammar))
+        raise GrammarParseException(str(grammar))
 
     @staticmethod
     def from_grammar_paren(grammar):
@@ -29,10 +32,8 @@ class Expression():
 
     @staticmethod
     def from_grammars(grammars):
-        l = []
         for e in grammars:
-            l.append(Expression.from_grammar(e))
-        return l
+            yield Expression.from_grammar(e)
     
     def __eq__(self, other):
         return False
@@ -41,19 +42,16 @@ class Expression():
         return not self == other
 
     def __str__(self):
-        return self.print()
+        return 'EXPRESSION'
 
     def __repr__(self):
-        return self.print()
+        return str(self)
 
-    def find_all(self, type):
-        return FindAllVisitor().FindAll(self, type)
+    def find_all(self, type = None, func = None):
+        return FindAllVisitor().FindAll(self, type = type, func = func)
 
     def for_all(self, func):
         return ForAllVisitor().ForAll(self, func)
-
-    def print(self):
-        return ''
 
 class Number(Expression):
     def __init__(self, grammar = None):
@@ -78,7 +76,7 @@ class Integer(Number):
     def __eq__(self, other):
         return type(self) == type(other) and self.value == other.value
 
-    def print(self):
+    def __str__(self):
         return str(self.value)
 
 class Decimal(Number):
@@ -93,7 +91,7 @@ class Decimal(Number):
     def __eq__(self, other):
         return type(self) == type(other) and self.value == other.value
 
-    def print(self):
+    def __str__(self):
         return str(self.value)
 
 class Variable(Expression):
@@ -108,7 +106,7 @@ class Variable(Expression):
     def __eq__(self, other):
         return type(self) == type(other) and self.name == other.name
 
-    def print(self):
+    def __str__(self):
         return str(self.name)
 
 class Function(Expression):
@@ -124,8 +122,8 @@ class Function(Expression):
     def __eq__(self, other):
         return type(self) == type(other) and self.name == other.name and self.body == other.body
 
-    def print(self):
-        return self.name + '[' + self.body.print() + ']'
+    def __str__(self):
+        return self.name + '[' + str(self.body) + ']'
 
 class Unary(Expression):
     def __init__(self, grammar = None):
@@ -144,8 +142,8 @@ class Negation(Unary):
         self.body = body
         return super().__init__(grammar = grammar)
 
-    def print(self):
-        return '-' + self.body.print()
+    def __str__(self):
+        return '-' + str(self.body)
     
     def __eq__(self, other):
         return type(self) == type(other) and self.body == other.body
@@ -183,29 +181,27 @@ class OperationMethod(Enum):
             return 2
 
     def __str__(self):
-        return self.print()
-
-    def __repr__(self):
-        return self.print()
-
-    def print(self):
         if self.value == '^':
             return self.value
         else:
             return ' ' + self.value + ' '
 
+    def __repr__(self):
+        return str(self)
+
 class Operation(Expression):
     def __init__(self, method, expressions, grammar = None):
         self.method = method
-        self.expressions = expressions
+        self.expressions = list(expressions)
         return super().__init__(grammar = grammar)
 
     @staticmethod
     def from_grammar(grammar):
+        grammar_expressions = list(grammar.expressions)
         method = None
         expressions = []
-        for i in range(0, len(grammar.expressions)):
-            expr = grammar.expressions[i]
+        for i in range(0, len(grammar_expressions)):
+            expr = grammar_expressions[i]
             if i % 2 == 0:
                 expressions.append(Expression.from_grammar(expr))
             elif method == None:
@@ -235,14 +231,14 @@ class Operation(Expression):
 
         return True
 
-    def print(self):
+    def __str__(self):
         values = []
         for e in self.expressions:
             if isinstance(e, Operation) and self.method.priority() > e.method.priority():
-                values.append('(' + e.print() + ')')
+                values.append('(' + str(e) + ')')
             else:
-                values.append(e.print())
-        return self.method.print().join(values)
+                values.append(str(e))
+        return str(self.method).join(values)
 
 class Visitor:
 
@@ -305,10 +301,8 @@ class Transformer:
             return self.TransformOperation(expression)
 
     def TransformMany(self, expressions):
-        l = []
         for e in expressions:
-            l.append(self.Transform(e))
-        return l
+             yield self.Transform(e)
 
     def TransformNumber(self, expression):
         if isinstance(expression, Integer):
@@ -352,15 +346,17 @@ def parse_file(path):
 
 class FindAllVisitor(Visitor):
 
-    def FindAll(self, expression, type):
+    def FindAll(self, expression, type = Expression, func = None):
         self.find = []
         self.type = type
+        self.func = func
         self.Visit(expression)
         return self.find;
 
     def Visit(self, expression):
-        if isinstance(expression, self.type):
-            self.find.append(expression)
+        if self.type == None or isinstance(expression, self.type):
+            if self.func == None or self.func(expression):
+                self.find.append(expression)
         super().Visit(expression)
 
 class ForAllVisitor(Visitor):
