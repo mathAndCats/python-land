@@ -33,6 +33,12 @@ class Expression():
             l.append(Expression.from_grammar(e))
         return l
 
+    def find_all(self, type):
+        return FindAllVisitor().FindAll(self, type)
+
+    def for_all(self, func):
+        return ForAllVisitor().ForAll(self, func)
+
     def print(self):
         return ''
 
@@ -301,5 +307,12 @@ class FindAllVisitor(Visitor):
             self.find.append(expression)
         super().Visit(expression)
 
-def find_all(expression, type):
-    return FindAllVisitor().FindAll(expression, type)
+class ForAllVisitor(Visitor):
+
+    def ForAll(self, expression, func):
+        self.func = func
+        self.Visit(expression)
+
+    def Visit(self, expression):
+        self.func(expression)
+        super().Visit(Expression)

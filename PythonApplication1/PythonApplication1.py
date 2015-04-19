@@ -2,7 +2,6 @@ import sys
 import MathExpressions
 
 class ReplaceMutiplicationWithDivide(MathExpressions.Transformer):
-
     def TransformOperation(self, expression):
         if expression.method == MathExpressions.OperationMethod.Multiply:
             return MathExpressions.Operation(MathExpressions.OperationMethod.Divide, self.TransformMany(expression.expressions))
@@ -13,8 +12,8 @@ if __name__ == '__main__':
     e = MathExpressions.parse_file('TextFile1.txt')
     print(e.print())
     
-    e2 = ReplaceMutiplicationWithDivide().Transform(e)
-    print(e2.print())
+    #e2 = ReplaceMutiplicationWithDivide().Transform(e)
+    #print(e2.print())
 
-    for f in MathExpressions.find_all(e2, MathExpressions.Function):
+    for f in e.find_all(MathExpressions.Function):
         print(f.print())
