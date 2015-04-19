@@ -2,7 +2,8 @@ from enum import Enum
 import MathParser
 
 class Expression():
-    def __init__(self):
+    def __init__(self, grammar = None):
+        self.grammar = grammar
         return super().__init__()
     
     @staticmethod
@@ -49,8 +50,8 @@ class Expression():
         return ''
 
 class Number(Expression):
-    def __init__(self):
-        return super().__init__()
+    def __init__(self, grammar = None):
+        return super().__init__(grammar = grammar)
 
     @staticmethod
     def from_grammar(grammar):
@@ -60,13 +61,13 @@ class Number(Expression):
             return Decimal.from_grammar(grammar)
 
 class Integer(Number):
-    def __init__(self, value):
+    def __init__(self, value, grammar = None):
         self.value = value
-        return super().__init__()
+        return super().__init__(grammar = grammar)
 
     @staticmethod
     def from_grammar(grammar):
-        return Integer(grammar.value)
+        return Integer(grammar.value, grammar = grammar)
     
     def __eq__(self, other):
         return type(self) == type(other) and self.value == other.value
@@ -75,13 +76,13 @@ class Integer(Number):
         return str(self.value)
 
 class Decimal(Number):
-    def __init__(self, value):
+    def __init__(self, value, grammar = None):
         self.value = value
-        return super().__init__()
+        return super().__init__(grammar = grammar)
 
     @staticmethod
     def from_grammar(grammar):
-        return Decimal(grammar.value)
+        return Decimal(grammar.value, grammar = grammar)
     
     def __eq__(self, other):
         return type(self) == type(other) and self.value == other.value
@@ -90,13 +91,13 @@ class Decimal(Number):
         return str(self.value)
 
 class Variable(Expression):
-    def __init__(self, name):
+    def __init__(self, name, grammar = None):
         self.name = name
-        return super().__init__()
+        return super().__init__(grammar = grammar)
 
     @staticmethod
     def from_grammar(grammar):
-        return Variable(grammar.name)
+        return Variable(grammar.name, grammar = grammar)
 
     def __eq__(self, other):
         return type(self) == type(other) and self.name == other.name
@@ -105,14 +106,14 @@ class Variable(Expression):
         return str(self.name)
 
 class Function(Expression):
-    def __init__(self, name, body):
+    def __init__(self, name, body, grammar = None):
         self.name = name
         self.body = body
-        return super().__init__()
+        return super().__init__(grammar = grammar)
 
     @staticmethod
     def from_grammar(grammar):
-        return Function(grammar.name, Expression.from_grammar(grammar.body))
+        return Function(grammar.name, Expression.from_grammar(grammar.body), grammar = grammar)
     
     def __eq__(self, other):
         return type(self) == type(other) and self.name == other.name and self.body == other.body
@@ -121,21 +122,21 @@ class Function(Expression):
         return self.name + '[' + self.body.print() + ']'
 
 class Unary(Expression):
-    def __init__(self):
-        return super().__init__()
+    def __init__(self, grammar = None):
+        return super().__init__(grammar = grammar)
 
     @staticmethod
     def from_grammar(grammar):
         if isinstance(grammar, MathParser.SingleExpression):
             if grammar.negative:
-                return Negation(Expression.from_grammar(grammar.body))
+                return Negation(Expression.from_grammar(grammar.body), grammar = grammar)
             else:
                 return Expression.from_grammar(grammar.body)
 
 class Negation(Unary):
-    def __init__(self, body):
+    def __init__(self, body, grammar = None):
         self.body = body
-        return super().__init__()
+        return super().__init__(grammar = grammar)
 
     def print(self):
         return '-' + self.body.print()
@@ -182,10 +183,10 @@ class OperationMethod(Enum):
             return ' ' + self.value + ' '
 
 class Operation(Expression):
-    def __init__(self, method, expressions):
+    def __init__(self, method, expressions, grammar = None):
         self.method = method
         self.expressions = expressions
-        return super().__init__()
+        return super().__init__(grammar = grammar)
 
     @staticmethod
     def from_grammar(grammar):
@@ -198,7 +199,7 @@ class Operation(Expression):
             elif method == None:
                 method = OperationMethod.from_grammar(expr)
 
-        return Operation(method, expressions)
+        return Operation(method, expressions, grammar = grammar)
     
     def __eq__(self, other):
         a = self
