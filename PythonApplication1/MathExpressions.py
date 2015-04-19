@@ -32,6 +32,12 @@ class Expression():
         for e in grammars:
             l.append(Expression.from_grammar(e))
         return l
+    
+    def __eq__(self, other):
+        return False
+
+    def __ne__(self, other):
+        return not self == other
 
     def find_all(self, type):
         return FindAllVisitor().FindAll(self, type)
@@ -60,7 +66,10 @@ class Integer(Number):
 
     @staticmethod
     def from_grammar(grammar):
-        return Decimal(grammar.value)
+        return Integer(grammar.value)
+    
+    def __eq__(self, other):
+        return type(self) == type(other) and self.value == other.value
 
     def print(self):
         return str(self.value)
@@ -73,6 +82,9 @@ class Decimal(Number):
     @staticmethod
     def from_grammar(grammar):
         return Decimal(grammar.value)
+    
+    def __eq__(self, other):
+        return type(self) == type(other) and self.value == other.value
 
     def print(self):
         return str(self.value)
@@ -86,6 +98,9 @@ class Variable(Expression):
     def from_grammar(grammar):
         return Variable(grammar.name)
 
+    def __eq__(self, other):
+        return type(self) == type(other) and self.name == other.name
+
     def print(self):
         return str(self.name)
 
@@ -98,6 +113,9 @@ class Function(Expression):
     @staticmethod
     def from_grammar(grammar):
         return Function(grammar.name, Expression.from_grammar(grammar.body))
+    
+    def __eq__(self, other):
+        return type(self) == type(other) and self.name == other.name and self.body == other.body
 
     def print(self):
         return self.name + '[' + self.body.print() + ']'
@@ -121,6 +139,9 @@ class Negation(Unary):
 
     def print(self):
         return '-' + self.body.print()
+    
+    def __eq__(self, other):
+        return type(self) == type(other) and self.body == other.body
 
 class OperationMethod(Enum):
     Power = '^'
@@ -178,6 +199,28 @@ class Operation(Expression):
                 method = OperationMethod.from_grammar(expr)
 
         return Operation(method, expressions)
+    
+    def __eq__(self, other):
+        a = self
+        b = other
+
+        # other must also be an Operation
+        if not type(a) == type(b):
+            return False
+
+        # operations must use the same methods
+        if not a.method == b.method:
+            return False
+
+        # count of expressions must be the same
+        if not len(a.expressions) == len(b.expressions):
+            return False
+
+        # check for equality of all expressions
+        if not all(i == j for i, j in zip(a.expressions, b.expressions)):
+            return False
+
+        return True
 
     def print(self):
         values = []

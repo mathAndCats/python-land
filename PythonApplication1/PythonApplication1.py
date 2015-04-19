@@ -15,5 +15,8 @@ if __name__ == '__main__':
     #e2 = ReplaceMutiplicationWithDivide().Transform(e)
     #print(e2.print())
 
+    find = MathExpressions.parse_text('DiracDelta[w + omega_p + omega_r + 2 * omega_y]')
+
     for f in e.find_all(MathExpressions.Function):
-        print(f.print())
+        if f == find:
+            print(f.print())
