@@ -148,6 +148,8 @@ class Negation(Unary):
     def __str__(self):
         if isinstance(self.body, Negation):
             return '-' + '(' + str(self.body) + ')'
+        if isinstance(self.body, Sequence):
+            return '-' + '(' + str(self.body) + ')'
         else:
             return '-' + str(self.body)
     
