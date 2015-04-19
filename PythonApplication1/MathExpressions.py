@@ -230,51 +230,51 @@ class Visitor:
 
 class Transformer:
 
-    def Visit(self, expression):
+    def Transform(self, expression):
         if isinstance(expression, Number):
-            return self.VisitNumber(expression)
+            return self.TransformNumber(expression)
         if isinstance(expression, Variable):
-            return self.VisitVariable(expression)
+            return self.TransformVariable(expression)
         if isinstance(expression, Function):
-            return self.VisitFunction(expression)
+            return self.TransformFunction(expression)
         if isinstance(expression, Unary):
-            return self.VisitUnary(expression)
+            return self.TransformUnary(expression)
         if isinstance(expression, Operation):
-            return self.VisitOperation(expression)
+            return self.TransformOperation(expression)
 
-    def VisitMany(self, expressions):
+    def TransformMany(self, expressions):
         l = []
         for e in expressions:
-            l.append(self.Visit(e))
+            l.append(self.Transform(e))
         return l
 
-    def VisitNumber(self, expression):
+    def TransformNumber(self, expression):
         if isinstance(expression, Integer):
-            return self.VisitInteger(expression)
+            return self.TransformInteger(expression)
         if isinstance(expression, Decimal):
-            return self.VisitDecimal(expression)
+            return self.TransformDecimal(expression)
 
-    def VisitInteger(self, expression):
+    def TransformInteger(self, expression):
         return Integer(expression.value)
 
-    def VisitDecimal(self, expression):
+    def TransformDecimal(self, expression):
         return Decimal(expression.value)
 
-    def VisitVariable(self, expression):
+    def TransformVariable(self, expression):
         return Variable(expression.name)
 
-    def VisitFunction(self, expression):
-        return Function(expression.name, self.Visit(expression.body))
+    def TransformFunction(self, expression):
+        return Function(expression.name, self.Transform(expression.body))
 
-    def VisitUnary(self, expression):
+    def TransformUnary(self, expression):
         if isinstance(expression, Negation):
-            return self.VisitNegation(expression)
+            return self.TransformNegation(expression)
 
-    def VisitNegation(self, expression):
-        return Negation(self.Visit(expression.body))
+    def TransformNegation(self, expression):
+        return Negation(self.Transform(expression.body))
 
-    def VisitOperation(self, expression):
-        return Operation(expression.method, self.VisitMany(expression.expressions))
+    def TransformOperation(self, expression):
+        return Operation(expression.method, self.TransformMany(expression.expressions))
 
 def from_grammar(grammar):
     return Expression.from_grammar(grammar)
