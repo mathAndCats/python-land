@@ -43,6 +43,9 @@ class Expression():
     def __str__(self):
         return self.print()
 
+    def __repr__(self):
+        return self.print()
+
     def find_all(self, type):
         return FindAllVisitor().FindAll(self, type)
 
@@ -178,6 +181,12 @@ class OperationMethod(Enum):
             return 2
         if self.value == '-':
             return 2
+
+    def __str__(self):
+        return self.print()
+
+    def __repr__(self):
+        return self.print()
 
     def print(self):
         if self.value == '^':
