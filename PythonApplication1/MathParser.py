@@ -48,7 +48,7 @@ class Variable (BaseGrammar):
         return self.name
 
 class Paren (BaseGrammar):
-    grammar = (L('('), REF('Expression'), L(')'))
+    grammar = (L('('), REF('Paren') | REF('Expression'), L(')'))
 
     def grammar_elem_init(self, sessiondata):
         self.body = self[1]
