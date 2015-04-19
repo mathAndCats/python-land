@@ -287,3 +287,19 @@ def parse_text(text):
     
 def parse_file(path):
     return from_grammar(MathParser.parse_file(path))
+
+class FindAllVisitor(Visitor):
+
+    def FindAll(self, expression, type):
+        self.find = []
+        self.type = type
+        self.Visit(expression)
+        return self.find;
+
+    def Visit(self, expression):
+        if isinstance(expression, self.type):
+            self.find.append(expression)
+        super().Visit(expression)
+
+def find_all(expression, type):
+    return FindAllVisitor().FindAll(expression, type)

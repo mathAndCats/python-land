@@ -15,3 +15,6 @@ if __name__ == '__main__':
     
     e2 = ReplaceMutiplicationWithDivide().Transform(e)
     print(e2.print())
+
+    for f in MathExpressions.find_all(e2, MathExpressions.Function):
+        print(f.print())
