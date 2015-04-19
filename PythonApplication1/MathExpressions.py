@@ -19,7 +19,7 @@ class Expression():
         if isinstance(grammar, MathParser.Func):
             return Function.from_grammar(grammar)
         if isinstance(grammar, MathParser.MathExpression):
-            return Operation.from_grammar(grammar)
+            return Sequence.from_grammar(grammar)
         if isinstance(grammar, MathParser.SingleExpression):
             return Unary.from_grammar(grammar)
         if isinstance(grammar, MathParser.Paren):
@@ -122,10 +122,10 @@ class Function(Expression):
         return Function(grammar.name, Expression.from_grammar(grammar.body), grammar = grammar)
     
     def __eq__(self, other):
-        return type(self) == type(other) and self.name == other.name and self.body == other.body
+        return type(self) == type(other) and self.name == other.name and self.operand == other.body
 
     def __str__(self):
-        return self.name + '[' + str(self.body) + ']'
+        return self.name + '[' + str(self.operand) + ']'
 
 class Unary(Expression):
     def __init__(self, grammar = None):
@@ -146,7 +146,7 @@ class Negation(Unary):
         self.body.parent = self
 
     def __str__(self):
-        return '-' + str(self.body)
+        return '-' + str(self.operand)
     
     def __eq__(self, other):
         return type(self) == type(other) and self.body == other.body
@@ -184,67 +184,91 @@ class OperationMethod(Enum):
             return 2
 
     def __str__(self):
-        if self.value == '^':
-            return self.value
-        else:
-            return ' ' + self.value + ' '
+        return self.value
 
     def __repr__(self):
         return str(self)
 
 class Operation(Expression):
-    def __init__(self, method, expressions, grammar = None):
+    def __init__(self, method, operand, grammar = None):
         super().__init__(grammar = grammar)
         self.method = method
-        self.expressions = list(expressions)
+        self.operand = operand
+        self.operand.parent = self
 
-        for e in self.expressions:
+    def __eq__(self, other):
+        return type(self) == type(other) and self.method == other.method and self.operand == other.operand
+
+    def __str__(self):
+        if self.method != None:
+            if isinstance(self.operand, Sequence):
+                return ' ' + str(self.method) + ' ' + '(' + str(self.operand) + ')'
+            else:
+                return ' ' + str(self.method) + ' ' + str(self.operand)
+        else:
+            if isinstance(self.operand, Sequence):
+                return '(' + str(self.operand) + ')'
+            else:
+                return str(self.operand)
+
+class Sequence(Expression):
+    def __init__(self, operations, grammar = None):
+        super().__init__(grammar = grammar)
+        self.operations = list(operations)
+
+        for e in self.operations:
             e.parent = self
 
     @staticmethod
     def from_grammar(grammar):
-        grammar_expressions = list(grammar.expressions)
-        method = None
-        expressions = []
-        for i in range(0, len(grammar_expressions)):
-            expr = grammar_expressions[i]
-            if i % 2 == 0:
-                expressions.append(Expression.from_grammar(expr))
-            elif method == None:
-                method = OperationMethod.from_grammar(expr)
 
-        return Operation(method, expressions, grammar = grammar)
+        # assemble underlying sequence of grammar parts, with a prepended None operation
+        grammar_expressions = list(grammar.expressions)
+        grammar_expressions.insert(0, None)
+
+        operations = []
+
+        for i in range(0, len(grammar_expressions), 2):
+            oper = grammar_expressions[i]
+            expr = grammar_expressions[i + 1]
+            
+            # generate method and expression
+            method = OperationMethod.from_grammar(oper) if oper != None else None
+            expression = Expression.from_grammar(expr)
+
+            # create new operation
+            operand = Operation(method, expression, oper if oper != None else expr)
+            operations.append(operand)
+
+        return Sequence(operations, grammar = grammar)
     
     def __eq__(self, other):
         a = self
         b = other
 
-        # other must also be an Operation
+        # other must also be an Sequence
         if not type(a) == type(b):
             return False
 
-        # operations must use the same methods
-        if not a.method == b.method:
+        # count of operations must be the same
+        if not len(a.operations) == len(b.operations):
             return False
 
-        # count of expressions must be the same
-        if not len(a.expressions) == len(b.expressions):
-            return False
-
-        # check for equality of all expressions
-        if not all(i == j for i, j in zip(a.expressions, b.expressions)):
+        # check for equality of all operations
+        if not all(i == j for i, j in zip(a.operations, b.operations)):
             return False
 
         return True
 
     def __str__(self):
         values = []
-        for e in self.expressions:
-            if isinstance(e, Operation) and self.method.priority() > e.method.priority():
+        for e in self.operations:
+            if isinstance(e, Sequence) and self.method.priority() > e.method.priority():
                 values.append('(' + str(e) + ')')
             else:
                 values.append(str(e))
-        return str(self.method).join(values)
+
+        return ''.join(values)
 
 class Visitor:
 
@@ -257,6 +281,8 @@ class Visitor:
             self.VisitFunction(expression)
         if isinstance(expression, Unary):
             self.VisitUnary(expression)
+        if isinstance(expression, Sequence):
+            self.VisitSequence(expression)
         if isinstance(expression, Operation):
             self.VisitOperation(expression)
 
@@ -271,26 +297,29 @@ class Visitor:
             self.VisitDecimal(expression)
 
     def VisitInteger(self, expression):
-        return
+        pass
 
     def VisitDecimal(self, expression):
-        return
+        pass
 
     def VisitVariable(self, expression):
-        return
+        pass
 
     def VisitFunction(self, expression):
-        self.Visit(expression.body)
+        self.Visit(expression.operand)
 
     def VisitUnary(self, expression):
         if isinstance(expression, Negation):
             self.VisitNegation(expression)
 
     def VisitNegation(self, expression):
-        self.Visit(expression.body)
+        self.Visit(expression.operand)
 
-    def VisitOperation(self, expresion):
-        self.VisitMany(expresion.expressions)
+    def VisitSequence(self, expresion):
+        self.VisitMany(expresion.operations)
+
+    def VisitOperation(self, operation):
+        pass
 
 class Transformer:
 
@@ -303,6 +332,8 @@ class Transformer:
             return self.TransformFunction(expression)
         if isinstance(expression, Unary):
             return self.TransformUnary(expression)
+        if isinstance(expression, Sequence):
+            return self.TransformSequence(expression)
         if isinstance(expression, Operation):
             return self.TransformOperation(expression)
 
@@ -326,17 +357,20 @@ class Transformer:
         return Variable(expression.name)
 
     def TransformFunction(self, expression):
-        return Function(expression.name, self.Transform(expression.body))
+        return Function(expression.name, self.Transform(expression.operand))
 
     def TransformUnary(self, expression):
         if isinstance(expression, Negation):
             return self.TransformNegation(expression)
 
     def TransformNegation(self, expression):
-        return Negation(self.Transform(expression.body))
+        return Negation(self.Transform(expression.operand))
+
+    def TransformSequence(self, expression):
+        return Sequence(self.TransformMany(expression.operations))
 
     def TransformOperation(self, expression):
-        return Operation(expression.method, self.TransformMany(expression.expressions))
+        return Operation(expression.method, self.Transform(expression.operand))
 
 def from_grammar(grammar):
     return Expression.from_grammar(grammar)

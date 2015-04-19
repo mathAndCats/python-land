@@ -2,9 +2,9 @@ import sys
 import MathExpressions
 
 class ReplaceMutiplicationWithDivide(MathExpressions.Transformer):
-    def TransformOperation(self, expression):
+    def TransformSequence(self, expression):
         if expression.method == MathExpressions.OperationMethod.Multiply:
-            return MathExpressions.Operation(MathExpressions.OperationMethod.Divide, list(self.TransformMany(expression.expressions)))
+            return MathExpressions.Sequence(MathExpressions.OperationMethod.Divide, list(self.TransformMany(expression.expressions)))
         else:
             return super().TransformOperation(expression)
 
