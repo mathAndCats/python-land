@@ -261,8 +261,8 @@ class Transformer:
     def VisitNegation(self, expression):
         return Negation(self.Visit(expression.body))
 
-    def VisitOperation(self, expresion):
-        return Operation(expresion.method, self.VisitMany(expression.expressions))
+    def VisitOperation(self, expression):
+        return Operation(expression.method, self.VisitMany(expression.expressions))
 
 def from_grammar(grammar):
     return Expression.from_grammar(grammar)
