@@ -198,7 +198,7 @@ class Visitor:
 
     def VisitMany(self, expressions):
         for e in expressions:
-            self.Visit(self, e)
+            self.Visit(e)
 
     def VisitNumber(self, expression):
         if isinstance(expression, Integer):
@@ -239,7 +239,7 @@ class Transformer:
     def VisitMany(self, expressions):
         l = []
         for e in expressions:
-            l.append(self.Visit(self, e))
+            l.append(self.Visit(e))
         return l
 
     def VisitNumber(self, expression):
