@@ -40,6 +40,9 @@ class Expression():
     def __ne__(self, other):
         return not self == other
 
+    def __str__(self):
+        return self.print()
+
     def find_all(self, type):
         return FindAllVisitor().FindAll(self, type)
 
