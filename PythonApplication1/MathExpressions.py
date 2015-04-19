@@ -206,6 +206,12 @@ class Visitor:
         if isinstance(expression, Decimal):
             self.VisitDecimal(expression)
 
+    def VisitInteger(self, expression):
+        return
+
+    def VisitDecimal(self, expression):
+        return
+
     def VisitVariable(self, expression):
         return
 
@@ -247,6 +253,12 @@ class Transformer:
             return self.VisitInteger(expression)
         if isinstance(expression, Decimal):
             return self.VisitDecimal(expression)
+
+    def VisitInteger(self, expression):
+        return Integer(expression.value)
+
+    def VisitDecimal(self, expression):
+        return Decimal(expression.value)
 
     def VisitVariable(self, expression):
         return Variable(expression.name)
