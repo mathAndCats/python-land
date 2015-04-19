@@ -18,7 +18,7 @@ class Identifier (BaseGrammar):
         return self.id
 
 class Number (BaseGrammar):
-    grammar = (WORD('0-9'))
+    grammar = (WORD('0-9'), OPTIONAL(L('.'), WORD('0-9')))
 
     def grammar_elem_init(self, sessiondata):
         self.value = float(self[0].string)
@@ -36,7 +36,7 @@ class Variable (BaseGrammar):
         return self.name
 
 class Paren (BaseGrammar):
-    grammar = (L('('), REF('Expr'), L(')'))
+    grammar = (L('('), REF('Expression'), L(')'))
 
     def grammar_elem_init(self, sessiondata):
         self.body = self[1]
@@ -45,7 +45,7 @@ class Paren (BaseGrammar):
         return '(' + self.body.print() + ')'
 
 class Func (BaseGrammar):
-    grammar = (Identifier, L('['), REF('Expr'), L(']'))
+    grammar = (Identifier, L('['), REF('Expression'), L(']'))
 
     def grammar_elem_init(self, sessiondata):
         self.name = self[0].id
@@ -75,50 +75,47 @@ class Operation (BaseGrammar):
     def print(self):
         value = ''
         for e in self.expressions:
-            if e.print:
+            if e is BaseGrammar:
                 value += e.print()
             else:
                 value += e.string
         return value;
 
 
-class P0Term (BaseGrammar):
+class P0OperationTerm (BaseGrammar):
     grammar = (Value,)
     grammar_collapse = True
 
-class P0Expr (Operation):
-    grammar = (P0Term, ONE_OR_MORE(L('^'), P0Term))
+class P0OperationExpression (Operation):
+    grammar = (P0OperationTerm, ONE_OR_MORE(L('^'), P0OperationTerm))
 
-class P1Term (BaseGrammar):
-    grammar = (P0Expr | Value)
+class P1OperationTerm (BaseGrammar):
+    grammar = (P0OperationExpression | Value)
     grammar_collapse = True
 
-class P1Expr (Operation):
-    grammar = (P1Term, ONE_OR_MORE(L('/'), P1Term))
+class P1OperationExpression (Operation):
+    grammar = (P1OperationTerm, ONE_OR_MORE(L('/'), P1OperationTerm))
 
-class P2Term (BaseGrammar):
-    grammar = (P0Expr | P1Expr | Value)
+class P2OperationTerm (BaseGrammar):
+    grammar = (P0OperationExpression | P1OperationExpression | Value)
     grammar_collapse = True
 
-class P2Expr (Operation):
-    grammar = (P2Term, ONE_OR_MORE(L('*'), P2Term))
+class P2OperationExpression (Operation):
+    grammar = (P2OperationTerm, ONE_OR_MORE(L('*'), P2OperationTerm))
 
-class P3Term (BaseGrammar):
-    grammar = (P0Expr | P1Expr | P2Expr | Value)
+class P3OperationTerm (BaseGrammar):
+    grammar = (P0OperationExpression | P1OperationExpression | P2OperationExpression | Value)
     grammar_collapse = True
 
-class P3Expr (Operation):
-    grammar = (P3Term, ONE_OR_MORE(L('+') | L('-'), P3Term))
+class P3OperationExpression (Operation):
+    grammar = (P3OperationTerm, ONE_OR_MORE(L('+') | L('-'), P3OperationTerm))
 
-class Expr (BaseGrammar):
-    grammar = (P3Expr | P2Expr | P1Expr | P0Expr | Value)
+class Expression (BaseGrammar):
+    grammar = (P3OperationExpression | P2OperationExpression | P1OperationExpression | P0OperationExpression | Value)
     grammar_collapse = True
-
-    def print(self):
-        return self[0].print()
 
 if __name__ == '__main__':
-    parser = Expr.parser()
+    parser = Expression.parser()
     with open('TextFile1.txt', 'r') as t:
         file = t.read()
         result = parser.parse_text(file, eof = True)
