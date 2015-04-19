@@ -34,7 +34,7 @@ class Decimal (Number):
     def grammar_elem_init(self, sessiondata):
         self.value = float(self[0].string)
 
-class NumberExpression (BaseGrammar):
+class NumberParser (BaseGrammar):
     grammar = (Decimal | Integer)
     grammar_collapse = True
 
@@ -67,7 +67,7 @@ class Func (BaseGrammar):
         return self.name + '[' + self.body.print() + ']'
 
 class SingleExpression (BaseGrammar):
-    grammar = (OPTIONAL('-'), Paren | Func | Variable | NumberExpression)
+    grammar = (OPTIONAL('-'), Paren | Func | Variable | NumberParser)
 
     def get_body(self):
         body = self[1]
