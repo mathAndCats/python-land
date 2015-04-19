@@ -7,6 +7,7 @@ class GrammarParseException(Exception):
 class Expression():
     def __init__(self, grammar = None):
         self.grammar = grammar
+        self.parent = None
         return super().__init__()
     
     @staticmethod
@@ -55,7 +56,7 @@ class Expression():
 
 class Number(Expression):
     def __init__(self, grammar = None):
-        return super().__init__(grammar = grammar)
+        super().__init__(grammar = grammar)
 
     @staticmethod
     def from_grammar(grammar):
@@ -66,8 +67,8 @@ class Number(Expression):
 
 class Integer(Number):
     def __init__(self, value, grammar = None):
+        super().__init__(grammar = grammar)
         self.value = value
-        return super().__init__(grammar = grammar)
 
     @staticmethod
     def from_grammar(grammar):
@@ -81,8 +82,8 @@ class Integer(Number):
 
 class Decimal(Number):
     def __init__(self, value, grammar = None):
+        super().__init__(grammar = grammar)
         self.value = value
-        return super().__init__(grammar = grammar)
 
     @staticmethod
     def from_grammar(grammar):
@@ -96,8 +97,8 @@ class Decimal(Number):
 
 class Variable(Expression):
     def __init__(self, name, grammar = None):
+        super().__init__(grammar = grammar)
         self.name = name
-        return super().__init__(grammar = grammar)
 
     @staticmethod
     def from_grammar(grammar):
@@ -111,9 +112,10 @@ class Variable(Expression):
 
 class Function(Expression):
     def __init__(self, name, body, grammar = None):
+        super().__init__(grammar = grammar)
         self.name = name
         self.body = body
-        return super().__init__(grammar = grammar)
+        self.body.parent = self
 
     @staticmethod
     def from_grammar(grammar):
@@ -127,7 +129,7 @@ class Function(Expression):
 
 class Unary(Expression):
     def __init__(self, grammar = None):
-        return super().__init__(grammar = grammar)
+        super().__init__(grammar = grammar)
 
     @staticmethod
     def from_grammar(grammar):
@@ -139,8 +141,9 @@ class Unary(Expression):
 
 class Negation(Unary):
     def __init__(self, body, grammar = None):
+        super().__init__(grammar = grammar)
         self.body = body
-        return super().__init__(grammar = grammar)
+        self.body.parent = self
 
     def __str__(self):
         return '-' + str(self.body)
@@ -191,9 +194,12 @@ class OperationMethod(Enum):
 
 class Operation(Expression):
     def __init__(self, method, expressions, grammar = None):
+        super().__init__(grammar = grammar)
         self.method = method
         self.expressions = list(expressions)
-        return super().__init__(grammar = grammar)
+
+        for e in self.expressions:
+            e.parent = self
 
     @staticmethod
     def from_grammar(grammar):
